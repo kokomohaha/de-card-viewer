@@ -1,6 +1,6 @@
 // 公開前に、この2つをあなたのサイトの URL と専用 Gmail に書き換えてください。
 // 書き換えるまで、読み取りプログラムは起動しません。
-export const SITE_URL = 'TODO_SITE_URL';
+export const SITE_URL = 'https://de-card-viewer.pages.dev';
 export const CONTACT_EMAIL = 'fengjinyg87@gmail.com';
 
 export const BASE_URL = 'https://dm.takaratomy.co.jp';
