@@ -1,6 +1,7 @@
 import { renderTile } from './card-tile.js';
 
-const TILE_WIDTH = { 1: 72, 2: 96, 3: 128 };
+const TILE_WIDTH = { 1: 64, 2: 84, 3: 120 };
+const TILE_WIDTH_NARROW = { 1: 52, 2: 64, 3: 88 }; // スマホ幅（600px 未満）
 const GAP = 6;
 const CAPTION = 18; // カード名1行の高さ
 const OVERSCAN_ROWS = 2;
@@ -28,7 +29,7 @@ export function createGrid(container, { onSelect }) {
 
   function layout() {
     const width = container.clientWidth - GAP;
-    const base = TILE_WIDTH[density];
+    const base = (container.clientWidth < 600 ? TILE_WIDTH_NARROW : TILE_WIDTH)[density];
     cols = Math.max(1, Math.floor((width + GAP) / (base + GAP)));
     tileW = Math.floor((width - GAP * (cols - 1)) / cols); // 余りを均等に配る
     rowH = Math.round((tileW * 88) / 63) + CAPTION + GAP;

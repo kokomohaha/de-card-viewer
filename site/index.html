@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>デュエマ カード一覧（非公式）</title>
+<meta name="description" content="デュエル・マスターズのカードを1画面にたくさん並べて探せる非公式ファンサイト。メルカリ・カーナベル・YouTubeの検索にもすぐ移れます。">
+<link rel="stylesheet" href="style.css">
+<script type="module" src="js/app.js"></script>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="top__title">
+      <h1>デュエマ カード一覧</h1>
+      <span class="badge">非公式</span>
+    </div>
+    <form id="filters" class="filters" autocomplete="off" onsubmit="return false">
+      <div class="filters__row filters__row--main">
+        <label class="field field--grow">
+          <span class="sr-only">カード名・能力などで検索</span>
+          <input id="f-text" type="search" placeholder="カード名・能力・種族・イラストレーターで検索" enterkeyhint="search">
+        </label>
+        <button type="button" id="f-toggle" class="btn toggle-filters" aria-expanded="false" aria-controls="filters">絞り込み</button>
+        <output id="count-mobile" class="count count--mobile" aria-hidden="true"></output>
+        <div class="civs" role="group" aria-label="文明">
+          <button type="button" class="civ" data-civ="光" aria-pressed="false">光</button>
+          <button type="button" class="civ" data-civ="水" aria-pressed="false">水</button>
+          <button type="button" class="civ" data-civ="闇" aria-pressed="false">闇</button>
+          <button type="button" class="civ" data-civ="火" aria-pressed="false">火</button>
+          <button type="button" class="civ" data-civ="自然" aria-pressed="false">自然</button>
+          <button type="button" class="civ" data-civ="ゼロ" aria-pressed="false">ゼロ</button>
+        </div>
+        <div class="field field--range">
+          <span class="field__label">コスト</span>
+          <input id="f-cost-min" type="number" min="0" max="99" inputmode="numeric" aria-label="コストの下限">
+          <span aria-hidden="true">〜</span>
+          <input id="f-cost-max" type="number" min="0" max="99" inputmode="numeric" aria-label="コストの上限">
+        </div>
+      </div>
+      <div class="filters__row">
+        <label class="field"><span class="field__label">種類</span>
+          <select id="f-type"><option value="">すべて</option></select></label>
+        <label class="field"><span class="field__label">種族</span>
+          <input id="f-race" list="dl-race" placeholder="すべて"></label>
+        <label class="field field--wide"><span class="field__label">パック</span>
+          <input id="f-product" list="dl-product" placeholder="すべて"></label>
+        <details class="more">
+          <summary>詳細条件</summary>
+          <div class="more__body">
+            <label class="field"><span class="field__label">文明の条件</span>
+              <select id="f-civmode">
+                <option value="any">選んだ文明のどれかを含む</option>
+                <option value="only">選んだ文明だけ</option>
+                <option value="all">選んだ文明をすべて含む</option>
+              </select></label>
+            <label class="field"><span class="field__label">単色・多色</span>
+              <select id="f-color"><option value="any">指定なし</option><option value="mono">単色</option><option value="multi">多色</option></select></label>
+            <label class="field"><span class="field__label">レアリティ</span>
+              <select id="f-rarity"><option value="">すべて</option></select></label>
+            <div class="field field--range">
+              <span class="field__label">パワー</span>
+              <input id="f-power-min" type="number" min="0" step="500" inputmode="numeric" aria-label="パワーの下限">
+              <span aria-hidden="true">〜</span>
+              <input id="f-power-max" type="number" min="0" step="500" inputmode="numeric" aria-label="パワーの上限">
+            </div>
+            <label class="field"><span class="field__label">ツインパクト</span>
+              <select id="f-twinpact"><option value="any">指定なし</option><option value="only">ツインパクトのみ</option><option value="exclude">ツインパクトを除く</option></select></label>
+            <label class="field"><span class="field__label">フォーマット</span>
+              <select id="f-format"><option value="">指定なし</option><option value="original">オリジナル</option><option value="current">現行（2ブロック）</option></select></label>
+            <label class="field"><span class="field__label">特殊能力</span>
+              <input id="f-keyword" list="dl-keyword" placeholder="すべて"></label>
+            <label class="field"><span class="field__label">イラストレーター</span>
+              <input id="f-illust" placeholder="名前の一部"></label>
+            <button type="button" id="f-reset" class="btn btn--quiet">条件をすべてクリア</button>
+          </div>
+        </details>
+      </div>
+      <div class="filters__row filters__row--meta">
+        <label class="field"><span class="sr-only">並び順</span>
+          <select id="f-sort">
+            <option value="release:desc">発売日の新しい順</option>
+            <option value="release:asc">発売日の古い順</option>
+            <option value="name:asc">カード名順</option>
+            <option value="cost:asc">コストの小さい順</option>
+            <option value="cost:desc">コストの大きい順</option>
+            <option value="power:desc">パワーの大きい順</option>
+            <option value="power:asc">パワーの小さい順</option>
+          </select></label>
+        <div class="density" role="group" aria-label="カードの大きさ">
+          <button type="button" data-density="1" aria-pressed="false" title="小">小</button>
+          <button type="button" data-density="2" aria-pressed="true" title="中">中</button>
+          <button type="button" data-density="3" aria-pressed="false" title="大">大</button>
+        </div>
+        <label class="check"><input id="f-group" type="checkbox" checked> 同名カードをまとめる</label>
+        <output id="count" class="count" aria-live="polite"></output>
+      </div>
+      <datalist id="dl-race"></datalist>
+      <datalist id="dl-product"></datalist>
+      <datalist id="dl-keyword"></datalist>
+    </form>
+  </header>
+
+  <main class="main">
+    <div id="grid" class="grid-wrap" tabindex="-1">
+      <p id="status" class="status">カードデータを読み込んでいます…</p>
+    </div>
+    <aside id="detail" class="detail" aria-label="カードの詳細" hidden></aside>
+  </main>
+
+  <footer class="foot">
+    <p class="foot__about">非公式のファンサイトです。タカラトミー等とは関係ありません。カード画像とカード情報は公式サイトのものを表示しています。</p>
+    <p class="foot__line"><span class="foot__short">非公式ファンサイト</span><span id="rights" class="foot__rights"></span></p>
+    <p class="foot__line"><span id="updated"></span><span id="contact"></span></p>
+  </footer>
+</div>
+</body>
+</html>
