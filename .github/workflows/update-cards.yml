@@ -1,0 +1,60 @@
+name: update-cards
+
+# 毎日 日本時間 3:00 に起動。必要なときだけ公式サイトを読み取る
+# （新しいカードは週1回、全件の読み直しは月1回。全件は数日に分けて続きから進む）。
+on:
+  schedule:
+    - cron: '0 18 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-cards
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm test
+
+      - name: Restore scrape progress
+        uses: actions/cache/restore@v4
+        with:
+          path: scraper/.cache
+          key: scrape-cache-${{ github.run_id }}
+          restore-keys: scrape-cache-
+
+      - name: Scrape
+        run: node scraper/run.js --mode=auto
+
+      - name: Save scrape progress
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: scraper/.cache
+          key: scrape-cache-${{ github.run_id }}
+
+      - name: Commit changes
+        run: |
+          git add site/data scraper
+          if git diff --cached --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: update card data"
+          git push
