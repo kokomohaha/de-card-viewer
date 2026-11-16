@@ -28,7 +28,7 @@ GitHub は、プログラムの保管と、毎日の自動更新に使います�
    git branch -M main
    git push -u origin main
    ```
-   ※ いまの作業ブランチ（`feat/dm-card-viewer`）を main にまとめてから push します。わからなければ Claude に「GitHub に push したい」と伝えてください。
+   ※ わからなければ Claude に「GitHub に push したい」と伝えてください。
 
 ## 3. Cloudflare Pages でサイトを公開する
 
