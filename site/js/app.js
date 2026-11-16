@@ -5,7 +5,7 @@ import { createDetail } from './detail.js';
 import { createControls } from './controls.js';
 
 // 公開前に、専用 Gmail アドレスに書き換えてください（削除依頼などの窓口としてフッターに表示します）。
-const CONTACT_EMAIL = 'TODO_CONTACT_EMAIL';
+const CONTACT_EMAIL = 'fengjinyg87@gmail.com';
 
 const $ = (id) => document.getElementById(id);
 

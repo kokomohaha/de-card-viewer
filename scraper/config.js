@@ -1,7 +1,7 @@
 // 公開前に、この2つをあなたのサイトの URL と専用 Gmail に書き換えてください。
 // 書き換えるまで、読み取りプログラムは起動しません。
 export const SITE_URL = 'TODO_SITE_URL';
-export const CONTACT_EMAIL = 'TODO_CONTACT_EMAIL';
+export const CONTACT_EMAIL = 'fengjinyg87@gmail.com';
 
 export const BASE_URL = 'https://dm.takaratomy.co.jp';
 export const USER_AGENT = `DMCardViewer/1.0 (+${SITE_URL}; ${CONTACT_EMAIL})`;
