@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { runScrape, ValidationFailed } from '../run.js';
 import { saveState, loadState } from '../state.js';
+import { FetchError } from '../fetcher.js';
 
 const detailHtml = fs.readFileSync(new URL('./fixtures/detail-creature.html', import.meta.url), 'utf8');
 const DAY = 24 * 60 * 60 * 1000;
@@ -63,6 +64,7 @@ beforeEach(() => {
   };
 });
 const readCards = () => JSON.parse(fs.readFileSync(paths.cards, 'utf8'));
+const readCache = () => JSON.parse(fs.readFileSync(paths.cache, 'utf8'));
 
 describe('runScrape', () => {
   test('auto: 最近更新済みなら none で何も書かない', async () => {
@@ -131,16 +133,96 @@ describe('runScrape', () => {
     const r1 = await runScrape({ mode: 'full', fetcher, now: () => t, paths, maxMinutes: 2 });
     expect(r1).toEqual({ action: 'full-progress', written: false });
     expect(fs.readFileSync(paths.cards, 'utf8')).toBe('[{"id":"old-1"}]');
-    const s = loadState(paths.state);
-    expect(s.full.doneIds.length).toBeGreaterThan(0);
-    expect(s.full.pendingIds.length).toBeGreaterThan(0);
+    const progress = readCache();
+    expect(progress.doneIds.length).toBeGreaterThan(0);
+    expect(progress.pendingIds.length).toBeGreaterThan(0);
 
     const before = site.calls.details.length;
     const r2 = await runScrape({ mode: 'auto', fetcher, now: () => t, paths, maxMinutes: 330 });
     expect(r2).toEqual({ action: 'full-done', written: true });
-    expect(site.calls.details.length - before).toBe(s.full.pendingIds.length);
+    expect(site.calls.details.length - before).toBe(progress.pendingIds.length);
     expect(readCards().map((c) => c.id)).toEqual(['a-1', 'a-2', 'a-3', 'a-4']);
-    expect(loadState(paths.state).full).toBeNull();
+    expect(readCache().done).toBe(true);
+  });
+
+  test('full: 通信エラーで止まっても、それまでの進み具合は保存され、次回は続きから', async () => {
+    const site = fakeSite({ all: ['a-1', 'a-2', 'a-3', 'a-4'] });
+    let fail = true;
+    const fetcher = {
+      post: site.fetcher.post,
+      get: async (url) => {
+        if (fail && url.includes('a-3')) throw new Error('network down');
+        return site.fetcher.get(url);
+      },
+    };
+    await expect(runScrape({ mode: 'full', fetcher, now: () => 0, paths, maxMinutes: 330 })).rejects.toThrow('network down');
+    expect(readCache().doneIds).toEqual(['a-1', 'a-2']);
+    fail = false;
+    const r = await runScrape({ mode: 'auto', fetcher, now: () => 0, paths, maxMinutes: 330 });
+    expect(r.action).toBe('full-done');
+    expect(site.calls.details.filter((id) => id === 'a-1')).toHaveLength(1);
+  });
+
+  test('full: 完了したのに公開（push）に失敗したら、次回は読み直さずに同じ結果をもう一度書き出す', async () => {
+    const site = fakeSite({ all: ['a-1', 'a-2'] });
+    const t = Date.parse('2026-11-17T00:00:00Z');
+    saveState(paths.state, { lastFullAt: '2026-10-01T00:00:00.000Z', lastIncrementalAt: '2026-11-16T00:00:00.000Z', full: null });
+    const stateBefore = fs.readFileSync(paths.state, 'utf8');
+    await runScrape({ mode: 'full', fetcher: site.fetcher, now: () => t, paths, maxMinutes: 330 });
+    // push に失敗 → GitHub 上の state.json と cards.json は前のまま
+    fs.writeFileSync(paths.state, stateBefore);
+    fs.rmSync(paths.cards);
+    const detailsBefore = site.calls.details.length;
+    const r = await runScrape({ mode: 'auto', fetcher: site.fetcher, now: () => t + DAY, paths, maxMinutes: 330 });
+    expect(r).toEqual({ action: 'full-done', written: true });
+    expect(site.calls.details.length).toBe(detailsBefore);
+    expect(readCards().map((c) => c.id)).toEqual(['a-1', 'a-2']);
+  });
+
+  test('full: 完了済みの結果がすでに公開されていれば、それは使わず消す', async () => {
+    const site = fakeSite({ all: ['a-1', 'a-2'] });
+    const t = Date.parse('2026-11-17T00:00:00Z');
+    await runScrape({ mode: 'full', fetcher: site.fetcher, now: () => t, paths, maxMinutes: 330 });
+    const r = await runScrape({ mode: 'auto', fetcher: site.fetcher, now: () => t + DAY, paths, maxMinutes: 330 });
+    expect(r.action).toBe('none');
+    expect(fs.existsSync(paths.cache)).toBe(false);
+  });
+
+  test('前回より大幅に枚数が減るときは書き出さない（公式の作りが変わった疑い）', async () => {
+    fs.mkdirSync(path.dirname(paths.cards), { recursive: true });
+    const prev = Array.from({ length: 100 }, (_, i) => ({ id: `p-${i}`, name: 'x', type: 'クリーチャー', civilizations: ['火'], image: '/x.jpg', second: null }));
+    fs.writeFileSync(paths.cards, JSON.stringify(prev));
+    const site = fakeSite({ all: ['p-0', 'p-1', 'p-2'] });
+    await expect(
+      runScrape({ mode: 'incremental', fetcher: site.fetcher, now: () => 0, paths, maxMinutes: 330 }),
+    ).rejects.toBeInstanceOf(ValidationFailed);
+    expect(JSON.parse(fs.readFileSync(paths.cards, 'utf8'))).toHaveLength(100);
+  });
+
+  test('詳細ページがすべて 404 なら書き出さない', async () => {
+    const site = fakeSite({ all: ['a-1', 'a-2', 'a-3'] });
+    const fetcher = { post: site.fetcher.post, get: async (url) => { throw new FetchError(url, 404); } };
+    await expect(runScrape({ mode: 'full', fetcher, now: () => 0, paths, maxMinutes: 330 })).rejects.toBeInstanceOf(ValidationFailed);
+    expect(fs.existsSync(paths.cards)).toBe(false);
+  });
+
+  test('一覧のページ送りが効かない（いつも1ページ目が返る）ときは、すぐに止まる', async () => {
+    let posts = 0;
+    const fetcher = {
+      post: async () => { posts++; return listHtml(['a-1', 'a-2'], 1, 5); },
+      get: async () => detailHtml,
+    };
+    await expect(
+      runScrape({ mode: 'incremental', fetcher, now: () => 0, paths, maxMinutes: 330 }),
+    ).rejects.toBeInstanceOf(ValidationFailed);
+    expect(posts).toBeLessThanOrEqual(2);
+  });
+
+  test('CLI 相当：minCards より少ない一覧は公開しない', async () => {
+    const site = fakeSite({ all: ['a-1', 'a-2'] });
+    await expect(
+      runScrape({ mode: 'incremental', fetcher: site.fetcher, now: () => 0, paths, maxMinutes: 330, minCards: 1000 }),
+    ).rejects.toBeInstanceOf(ValidationFailed);
   });
 
   test('検証エラーがあると ValidationFailed で何も書かない', async () => {

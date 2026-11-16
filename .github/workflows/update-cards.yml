@@ -2,6 +2,7 @@ name: update-cards
 
 # 毎日 日本時間 3:00 に起動。必要なときだけ公式サイトを読み取る
 # （新しいカードは週1回、全件の読み直しは月1回。全件は数日に分けて続きから進む）。
+# 全件の読み直しの進み具合は scraper/.cache/full.json に入り、Actions のキャッシュで次回に引き継ぐ。
 on:
   schedule:
     - cron: '0 18 * * *'
@@ -38,23 +39,32 @@ jobs:
           restore-keys: scrape-cache-
 
       - name: Scrape
+        id: scrape
         run: node scraper/run.js --mode=auto
 
+      # 読み取りに失敗したときは何も公開しない（このステップは動かない）
+      - name: Publish card data
+        run: |
+          git add site/data scraper/state.json 2>/dev/null || git add site/data
+          if ! git diff --cached --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "chore: update card data"
+            for i in 1 2 3; do
+              git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}" && break
+              if [ "$i" = 3 ]; then echo "push failed"; exit 1; fi
+              sleep $((i * 15))
+            done
+          fi
+          # 全件の読み直しが完了し、公開もできたので、その結果のキャッシュは不要
+          if [ -f scraper/.cache/full.json ] && grep -q '"done":true' scraper/.cache/full.json; then
+            rm scraper/.cache/full.json
+          fi
+
+      # 失敗・時間切れでも、ここまでの進み具合は必ず保存する（公開の後に保存する）
       - name: Save scrape progress
         if: always()
         uses: actions/cache/save@v4
         with:
           path: scraper/.cache
           key: scrape-cache-${{ github.run_id }}
-
-      - name: Commit changes
-        run: |
-          git add site/data scraper
-          if git diff --cached --quiet; then
-            echo "No changes"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore: update card data"
-          git push
