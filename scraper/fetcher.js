@@ -16,6 +16,7 @@ const MAX_ATTEMPTS = 3;
  */
 export function createFetcher({
   minIntervalMs = MIN_INTERVAL_MS,
+  userAgent = USER_AGENT,
   fetchImpl = fetch,
   sleep = (ms) => new Promise((r) => setTimeout(r, ms)),
   now = () => Date.now(),
@@ -50,12 +51,12 @@ export function createFetcher({
     throw lastErr;
   }
 
-  const get = (url) => request(url, { headers: { 'User-Agent': USER_AGENT } });
+  const get = (url) => request(url, { headers: { 'User-Agent': userAgent } });
   const post = (url, body) =>
     request(url, {
       method: 'POST',
       body,
-      headers: { 'User-Agent': USER_AGENT, 'Content-Type': 'application/x-www-form-urlencoded' },
+      headers: { 'User-Agent': userAgent, 'Content-Type': 'application/x-www-form-urlencoded' },
     });
 
   return { get, post };

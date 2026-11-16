@@ -38,6 +38,18 @@ describe('createFetcher', () => {
     expect(seen).toBe(USER_AGENT);
   });
 
+  test('userAgent を指定するとその User-Agent を付ける', async () => {
+    const c = fakeClock();
+    let seen;
+    const f = createFetcher({
+      userAgent: 'DMCardViewer/1.0 (development)',
+      fetchImpl: async (url, init) => { seen = init.headers['User-Agent']; return okResponse('x'); },
+      sleep: c.sleep, now: c.now,
+    });
+    await f.get('https://example.test/a');
+    expect(seen).toBe('DMCardViewer/1.0 (development)');
+  });
+
   test('500 と通信エラーは2回失敗しても3回目で成功すれば本文を返す', async () => {
     const c = fakeClock();
     let n = 0;
