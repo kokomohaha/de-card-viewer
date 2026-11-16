@@ -65,6 +65,20 @@ describe('createFetcher', () => {
     expect(n).toBe(3);
   });
 
+  test('post はフォーム形式の本文を POST で送る', async () => {
+    const c = fakeClock();
+    let seen;
+    const f = createFetcher({
+      fetchImpl: async (url, init) => { seen = { url, ...init }; return okResponse('ok'); },
+      sleep: c.sleep, now: c.now,
+    });
+    await expect(f.post('https://example.test/card/', 'pagenum=2&samename=show')).resolves.toBe('ok');
+    expect(seen.method).toBe('POST');
+    expect(seen.body).toBe('pagenum=2&samename=show');
+    expect(seen.headers['Content-Type']).toBe('application/x-www-form-urlencoded');
+    expect(seen.headers['User-Agent']).toBe(USER_AGENT);
+  });
+
   test('404 は再試行せず FetchError(status=404) を投げる', async () => {
     const c = fakeClock();
     let n = 0;

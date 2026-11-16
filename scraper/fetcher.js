@@ -30,13 +30,13 @@ export function createFetcher({
     last = now();
   }
 
-  async function get(url) {
+  async function request(url, init) {
     let lastErr;
     for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
       if (attempt > 0) await sleep(RETRY_DELAYS_MS[attempt - 1]);
       await waitTurn();
       try {
-        const res = await fetchImpl(url, { headers: { 'User-Agent': USER_AGENT } });
+        const res = await fetchImpl(url, init);
         if (res.ok) return await res.text();
         if (res.status >= 400 && res.status < 500 && res.status !== 429) {
           throw new FetchError(url, res.status);
@@ -50,5 +50,13 @@ export function createFetcher({
     throw lastErr;
   }
 
-  return { get };
+  const get = (url) => request(url, { headers: { 'User-Agent': USER_AGENT } });
+  const post = (url, body) =>
+    request(url, {
+      method: 'POST',
+      body,
+      headers: { 'User-Agent': USER_AGENT, 'Content-Type': 'application/x-www-form-urlencoded' },
+    });
+
+  return { get, post };
 }
