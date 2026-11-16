@@ -23,6 +23,11 @@ export function imageUrl(card) {
   return card.image ? OFFICIAL + card.image : null;
 }
 
+/** 両面カードの裏面の画像。なければ null。 */
+export function backImageUrl(card) {
+  return card.second?.image ? OFFICIAL + card.second.image : null;
+}
+
 /** 一覧用の小さな画像。なければ詳細用の画像。 */
 export function thumbUrl(card) {
   return card.thumb ? OFFICIAL + card.thumb : imageUrl(card);

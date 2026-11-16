@@ -1,4 +1,4 @@
-import { buildLinks, imageUrl, thumbUrl } from './links.js';
+import { buildLinks, imageUrl, thumbUrl, backImageUrl } from './links.js';
 
 function el(tag, attrs = {}, ...children) {
   const e = document.createElement(tag);
@@ -67,19 +67,47 @@ function closeLightbox() {
  * 押すと全画面で表示する。
  */
 function media(card, onFail) {
-  const full = imageUrl(card);
   const first = thumbUrl(card);
   if (!first) return null;
-  const img = el('img', { src: first, alt: card.name, decoding: 'async' });
+  // 表示する面。両面カード（ツインパクト以外で裏面の画像があるもの）は裏面も出す
+  const faces = [{ label: '表面', name: card.name, quick: first, full: imageUrl(card) ?? first }];
+  const back = !card.isTwinpact ? backImageUrl(card) : null;
+  if (back) faces.push({ label: '裏面', name: card.second.name, quick: back, full: back });
+  let current = faces[0];
+
+  const img = el('img', { src: current.quick, alt: current.name, decoding: 'async' });
   const zoom = el('button', { class: 'detail__zoom', type: 'button', title: '画面いっぱいに拡大' }, img);
   const box = el('div', { class: 'detail__media' }, zoom);
-  img.addEventListener('error', () => { box.remove(); onFail(); });
-  if (full && full !== first) {
+  img.addEventListener('error', () => {
+    if (current !== faces[0]) return; // 裏面だけ読めないときは表面に戻せるよう残す
+    box.remove();
+    onFail();
+  });
+  zoom.addEventListener('click', () => openLightbox(current.full, current.name));
+
+  // 一覧で読み込み済みの画像をすぐ出し、詳細用の画像が届いたら差し替える
+  const upgrade = (face) => {
+    if (face.full === face.quick) return;
     const pre = new Image();
-    pre.addEventListener('load', () => { if (img.isConnected) img.src = full; });
-    pre.src = full;
+    pre.addEventListener('load', () => { if (img.isConnected && current === face) img.src = face.full; });
+    pre.src = face.full;
+  };
+  upgrade(current);
+
+  if (faces.length > 1) {
+    const buttons = faces.map((face) => {
+      const b = el('button', { type: 'button', 'aria-pressed': String(face === current) }, face.label);
+      b.addEventListener('click', () => {
+        current = face;
+        img.src = face.quick;
+        img.alt = face.name;
+        buttons.forEach((x, i) => x.setAttribute('aria-pressed', String(faces[i] === face)));
+        upgrade(face);
+      });
+      return b;
+    });
+    box.append(el('div', { class: 'detail__faces', role: 'group', 'aria-label': '表示する面' }, ...buttons));
   }
-  zoom.addEventListener('click', () => openLightbox(full ?? first, card.name));
   return box;
 }
 

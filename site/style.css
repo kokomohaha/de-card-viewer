@@ -155,7 +155,11 @@ input[type="number"] { width: 4.6em; }
 .detail__info { min-width: 0; }
 .detail:not(.has-image) .detail__info { padding-top: 34px; }
 /* カードの拡大図。押すと全画面で表示する */
-.detail__media { margin: 0 0 12px; }
+.detail__media { margin: 0 0 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.detail__faces { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; flex: none; }
+.detail__faces button { border: 0; background: var(--surface); padding: 5px 16px; cursor: pointer; }
+.detail__faces button + button { border-left: 1px solid var(--line); }
+.detail__faces button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
 .detail__zoom { display: block; width: 100%; border: 0; padding: 0; background: none; cursor: zoom-in; }
 .detail__zoom img {
   display: block; width: 100%; max-width: 360px; margin: 0 auto; aspect-ratio: 63 / 88; object-fit: contain;
@@ -168,7 +172,7 @@ input[type="number"] { width: 4.6em; }
     gap: 16px; overflow: hidden; padding: 12px 0 12px 12px;
   }
   .detail.has-image .detail__media { margin: 0; min-height: 0; height: 100%; }
-  .detail.has-image .detail__zoom { height: 100%; width: auto; }
+  .detail.has-image .detail__zoom { flex: 1; min-height: 0; width: auto; }
   .detail.has-image .detail__zoom img { height: 100%; width: auto; max-width: min(42vw, 560px); max-height: 909px; }
   .detail.has-image .detail__info { overflow-y: auto; min-height: 0; padding: 36px 16px 16px 0; }
 }

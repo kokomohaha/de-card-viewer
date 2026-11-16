@@ -3,6 +3,7 @@ import { queryToHash, hashToQuery } from './query-url.js';
 import { createGrid } from './grid.js';
 import { createDetail } from './detail.js';
 import { createControls } from './controls.js';
+import { useNormalImages } from './normal.js';
 
 // 公開前に、専用 Gmail アドレスに書き換えてください（削除依頼などの窓口としてフッターに表示します）。
 const CONTACT_EMAIL = 'fengjinyg87@gmail.com';
@@ -35,6 +36,7 @@ async function main() {
     return;
   }
   $('status').remove();
+  cards = useNormalImages(cards); // 画像はすべて通常版のものを使う
   renderFooter(meta);
 
   const grid = createGrid(gridEl, { onSelect: (card) => detail.show(card) });

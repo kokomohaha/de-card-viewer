@@ -70,6 +70,17 @@ describe('parseDetailPage', () => {
     expect(c.mana).toBeNull();
   });
 
+  test('両面カードは裏面の画像も保存する（ツインパクトは1枚の画像なので null）', () => {
+    expect(parseDetailPage(fx('detail-dragheart'), 'dmr14-v01').second.image).toBe('/wp-content/card/cardimage/dmr14-v01b.jpg');
+    expect(parseDetailPage(fx('detail-twinpact'), 'dm26ex5-G003').second.image).toBeNull();
+  });
+
+  test('収録番号を取り出す（通常版かどうかの判断に使う）', () => {
+    expect(parseDetailPage(fx('detail-spell'), 'dmr14-051')).toMatchObject({ setCode: 'DMR14', number: '51/55' });
+    expect(parseDetailPage(fx('detail-creature'), 'dm26ex5-SEC001CHO')).toMatchObject({ setCode: 'DM26EX5', number: '㊙1超/㊙6' });
+    expect(parseDetailPage(fx('detail-twinpact'), 'dm26ex5-G003').number).toBe('G3/G20');
+  });
+
   test('カードの部分がないページは例外', () => {
     expect(() => parseDetailPage('<html><body>not found</body></html>', 'x-1')).toThrow();
   });

@@ -65,7 +65,11 @@ export function parseDetailPage(html, id) {
   }
 
   const front = parseFace($, boxes[0], names[0]);
-  const second = boxes[1] ? parseFace($, boxes[1], names[1] ?? '') : null;
+  const second = boxes[1] ? { ...parseFace($, boxes[1], names[1] ?? ''), image: secondImage || null } : null;
+  // 見出しの「(DMR14 51/55)」から収録商品の記号と番号を取り出す
+  const pack = boxes[0].find('h3.card-name .packname').first().text().replace(/[()（）]/g, '').trim();
+  const [setCode = null, ...rest] = pack.split(/\s+/);
+  const number = rest.join(' ') || null;
   const products = $('.productCardList li a')
     .map((_, a) => $(a).text().replace(/\s+/g, ' ').trim())
     .get();
@@ -77,6 +81,8 @@ export function parseDetailPage(html, id) {
     illustrator: cellText($, boxes[0], 'illusttxt'),
     image: boxes[0].find('.card-img img').attr('src') || null,
     thumb: null,
+    setCode,
+    number,
     products,
     formats: [],
     releaseOrder: 0,

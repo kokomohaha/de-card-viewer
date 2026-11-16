@@ -49,6 +49,26 @@ test('画像を押すと全画面の拡大表示が開き、押すか Esc で閉
   expect(closed).toBe(1);
 });
 
+test('両面カードは裏面の画像も出し、表面・裏面を切り替えられる。拡大表示は今の面', () => {
+  detail.show(card({
+    name: '龍波動空母 エビデゴラス', image: '/wp-content/card/cardimage/v01a.jpg', thumb: '/wp-content/card/cardthumb/v01a.jpg',
+    second: { name: '最終龍理 Q.E.D.+', type: 'ドラグハート・クリーチャー', civilizations: ['水'], image: '/wp-content/card/cardimage/v01b.jpg' },
+  }));
+  const faces = [...aside.querySelectorAll('.detail__faces button')];
+  expect(faces.map((b) => b.textContent)).toEqual(['表面', '裏面']);
+  expect(faces[0].getAttribute('aria-pressed')).toBe('true');
+  faces[1].click();
+  expect(aside.querySelector('.detail__zoom img').getAttribute('src')).toBe('https://dm.takaratomy.co.jp/wp-content/card/cardimage/v01b.jpg');
+  expect(faces[1].getAttribute('aria-pressed')).toBe('true');
+  aside.querySelector('.detail__zoom').click();
+  expect(document.querySelector('.lightbox img').getAttribute('src')).toBe('https://dm.takaratomy.co.jp/wp-content/card/cardimage/v01b.jpg');
+});
+
+test('ツインパクトや片面のカードは面の切り替えを出さない', () => {
+  detail.show(card({ isTwinpact: true, second: { name: 'エナジー・ライト', type: '呪文', civilizations: ['光'], image: null } }));
+  expect(aside.querySelector('.detail__faces')).toBeNull();
+});
+
 test('画像がないカードは拡大図の欄を出さない', () => {
   detail.show(card({ image: null, thumb: null }));
   expect(aside.querySelector('.detail__media')).toBeNull();
