@@ -7,6 +7,7 @@ import { listPageRequest, parseListPage, parseFilterOptions, parseRightsNotice }
 import { parseDetailPage } from './parse-detail.js';
 import { validateCard } from './validate.js';
 import { loadState, saveState } from './state.js';
+import { writeCards, readCards } from './card-files.js';
 
 const DAY = 24 * 60 * 60 * 1000;
 const FULL_EVERY_DAYS = 30;
@@ -122,17 +123,17 @@ function finalize(snapshot, byId, paths, nowIso) {
     if (!c) return;
     cards.push({ ...c, thumb: item.thumb, releaseOrder: n - i, formats: FORMATS.filter((f) => fmtSets[f].has(item.id)) });
   });
-  const prevCount = readJson(paths.cards, []).length;
+  const prevCount = readCards(paths.cards).length;
   if (cards.length === 0 || (prevCount >= 100 && cards.length < prevCount * MIN_KEEP_RATIO)) {
     throw new ValidationFailed([`カードが ${prevCount} 枚から ${cards.length} 枚に減ります（公式サイトの作りが変わった可能性があるため、公開しません）`]);
   }
-  writeJson(paths.cards, cards);
-  writeJson(paths.meta, { updatedAt: nowIso, count: cards.length, rightsNotice: snapshot.rightsNotice, options: snapshot.options });
+  const cardFiles = writeCards(paths.cards, cards);
+  writeJson(paths.meta, { updatedAt: nowIso, count: cards.length, cardFiles, rightsNotice: snapshot.rightsNotice, options: snapshot.options });
 }
 
 async function runIncremental(o) {
   const snapshot = await snapshotLists(o);
-  const existing = new Map(readJson(o.paths.cards, []).map((c) => [c.id, c]));
+  const existing = new Map(readCards(o.paths.cards).map((c) => [c.id, c]));
   const problems = [];
   let attempted = 0;
   for (const item of snapshot.items) {

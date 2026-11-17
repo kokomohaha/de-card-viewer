@@ -5,6 +5,7 @@ import path from 'node:path';
 import { runScrape, ValidationFailed } from '../run.js';
 import { saveState, loadState } from '../state.js';
 import { FetchError } from '../fetcher.js';
+import { readCards as readCardFiles } from '../card-files.js';
 
 const detailHtml = fs.readFileSync(new URL('./fixtures/detail-creature.html', import.meta.url), 'utf8');
 const DAY = 24 * 60 * 60 * 1000;
@@ -63,7 +64,8 @@ beforeEach(() => {
     cache: path.join(dir, 'scraper/.cache/full.json'),
   };
 });
-const readCards = () => JSON.parse(fs.readFileSync(paths.cards, 'utf8'));
+const readCards = () => readCardFiles(paths.cards, null);
+const cardsPublished = () => readCardFiles(paths.cards, null) !== null;
 const readCache = () => JSON.parse(fs.readFileSync(paths.cache, 'utf8'));
 
 describe('runScrape', () => {
@@ -74,7 +76,7 @@ describe('runScrape', () => {
     const r = await runScrape({ mode: 'auto', fetcher: site.fetcher, now: () => t, paths, maxMinutes: 330 });
     expect(r).toEqual({ action: 'none', written: false });
     expect(site.calls.lists).toBe(0);
-    expect(fs.existsSync(paths.cards)).toBe(false);
+    expect(cardsPublished()).toBe(false);
   });
 
   test('auto: 一度も全件読み取りしていなければ full を始める', async () => {
@@ -117,7 +119,7 @@ describe('runScrape', () => {
     expect(c2.releaseOrder).toBeGreaterThan(c3.releaseOrder);
     expect(c1.thumb).toBe('/wp-content/card/cardthumb/a-1.jpg');
     const meta = JSON.parse(fs.readFileSync(paths.meta, 'utf8'));
-    expect(meta).toMatchObject({ count: 3, rightsNotice: 'TM and ©TOMY', updatedAt: new Date(0).toISOString() });
+    expect(meta).toMatchObject({ count: 3, cardFiles: ['cards-0.json'], rightsNotice: 'TM and ©TOMY', updatedAt: new Date(0).toISOString() });
     expect(meta.options.races).toEqual(['ドラゴン']);
   });
 
@@ -171,7 +173,7 @@ describe('runScrape', () => {
     await runScrape({ mode: 'full', fetcher: site.fetcher, now: () => t, paths, maxMinutes: 330 });
     // push に失敗 → GitHub 上の state.json と cards.json は前のまま
     fs.writeFileSync(paths.state, stateBefore);
-    fs.rmSync(paths.cards);
+    fs.rmSync(path.dirname(paths.cards), { recursive: true });
     const detailsBefore = site.calls.details.length;
     const r = await runScrape({ mode: 'auto', fetcher: site.fetcher, now: () => t + DAY, paths, maxMinutes: 330 });
     expect(r).toEqual({ action: 'full-done', written: true });
@@ -203,7 +205,7 @@ describe('runScrape', () => {
     const site = fakeSite({ all: ['a-1', 'a-2', 'a-3'] });
     const fetcher = { post: site.fetcher.post, get: async (url) => { throw new FetchError(url, 404); } };
     await expect(runScrape({ mode: 'full', fetcher, now: () => 0, paths, maxMinutes: 330 })).rejects.toBeInstanceOf(ValidationFailed);
-    expect(fs.existsSync(paths.cards)).toBe(false);
+    expect(cardsPublished()).toBe(false);
   });
 
   test('一覧のページ送りが効かない（いつも1ページ目が返る）ときは、すぐに止まる', async () => {
@@ -230,7 +232,7 @@ describe('runScrape', () => {
     await expect(
       runScrape({ mode: 'incremental', fetcher: site.fetcher, now: () => 0, paths, maxMinutes: 330 }),
     ).rejects.toBeInstanceOf(ValidationFailed);
-    expect(fs.existsSync(paths.cards)).toBe(false);
+    expect(cardsPublished()).toBe(false);
     expect(fs.existsSync(paths.meta)).toBe(false);
   });
 
@@ -249,7 +251,7 @@ describe('runScrape', () => {
     const site = fakeSite({ all, broken: all.slice(0, 310) });
     await expect(runScrape({ mode: 'full', fetcher: site.fetcher, now: () => 0, paths, maxMinutes: 330 })).rejects.toBeInstanceOf(ValidationFailed);
     expect(site.calls.details.length).toBeLessThanOrEqual(302);
-    expect(fs.existsSync(paths.cards)).toBe(false);
+    expect(cardsPublished()).toBe(false);
   });
 
   test('全件の読み直しの最後に、読み取れなかったカードをもう一度だけ読む', async () => {

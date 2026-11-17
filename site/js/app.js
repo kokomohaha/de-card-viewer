@@ -4,6 +4,7 @@ import { createGrid } from './grid.js';
 import { createDetail } from './detail.js';
 import { createControls } from './controls.js';
 import { useNormalImages } from './normal.js';
+import { loadCards } from './load-cards.js';
 
 // 公開前に、専用 Gmail アドレスに書き換えてください（削除依頼などの窓口としてフッターに表示します）。
 const CONTACT_EMAIL = 'fengjinyg87@gmail.com';
@@ -30,7 +31,8 @@ async function main() {
   let cards;
   let meta;
   try {
-    [cards, meta] = await Promise.all([loadJson('data/cards.json'), loadJson('data/meta.json')]);
+    meta = await loadJson('data/meta.json');
+    cards = await loadCards(meta, loadJson);
   } catch {
     $('status').textContent = 'カードデータを読み込めませんでした。時間をおいて再読み込みしてください。';
     return;
