@@ -244,12 +244,29 @@ describe('runScrape', () => {
     expect(ids).not.toContain('a-7');
   });
 
-  test('読み取れないカードが50件を超えたら、その時点で止まる', async () => {
-    const all = Array.from({ length: 200 }, (_, i) => `a-${i}`);
-    const site = fakeSite({ all, broken: all.slice(0, 60) });
+  test('読み取れないカードが300件を超えたら、その時点で止まる', async () => {
+    const all = Array.from({ length: 400 }, (_, i) => `a-${i}`);
+    const site = fakeSite({ all, broken: all.slice(0, 310) });
     await expect(runScrape({ mode: 'full', fetcher: site.fetcher, now: () => 0, paths, maxMinutes: 330 })).rejects.toBeInstanceOf(ValidationFailed);
-    expect(site.calls.details.length).toBeLessThanOrEqual(52);
+    expect(site.calls.details.length).toBeLessThanOrEqual(302);
     expect(fs.existsSync(paths.cards)).toBe(false);
+  });
+
+  test('全件の読み直しの最後に、読み取れなかったカードをもう一度だけ読む', async () => {
+    const all = Array.from({ length: 30 }, (_, i) => `a-${i}`);
+    const site = fakeSite({ all });
+    let firstTry = true;
+    const fetcher = {
+      post: site.fetcher.post,
+      get: async (url) => {
+        if (firstTry && url.includes('id=a-5')) { firstTry = false; return '<html><body>一時的なエラー</body></html>'; }
+        return site.fetcher.get(url);
+      },
+    };
+    const r = await runScrape({ mode: 'full', fetcher, now: () => 0, paths, maxMinutes: 330 });
+    expect(r.action).toBe('full-done');
+    expect(readCards().map((c) => c.id)).toContain('a-5');
+    expect(readCards()).toHaveLength(30);
   });
 
   test('一覧のページが空なら（公式の作りが変わった）ValidationFailed', async () => {

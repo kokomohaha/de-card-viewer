@@ -30,8 +30,8 @@ const readJson = (file, fallback) => (fs.existsSync(file) ? JSON.parse(fs.readFi
 
 
 // 読み取れないカード（404・解析できない・必須項目がない）は飛ばして続ける。
-// ただし50件を超えるか、全体の5%を超えたら、公式の作りが変わった疑いがあるので止める。
-const MAX_PROBLEMS = 50;
+// ただし300件を超えるか、全体の5%を超えたら、公式の作りが変わった疑いがあるので止める。
+const MAX_PROBLEMS = 300;
 const MAX_PROBLEM_RATIO = 0.05;
 const MIN_KEEP_RATIO = 0.95; // 前回より5%以上減ったら公開しない
 const PAGE_MARGIN = 5;
@@ -176,6 +176,16 @@ async function runFull(o) {
   cache.problems ??= [];
   let sinceSave = 0;
   try {
+    // 最後まで読んだら、読み取れなかったカードを一度だけ読み直す（一時的なエラーや、点検の基準を直したあとのため）
+    const retryProblems = () => {
+      if (cache.pendingIds.length || cache.retried || !cache.problems.length) return;
+      const ids = [...new Set(cache.problems.map((p) => p.split(':')[0]))];
+      cache.retried = true;
+      cache.problems = [];
+      cache.doneIds = cache.doneIds.filter((id) => !ids.includes(id));
+      cache.pendingIds.push(...ids);
+    };
+    retryProblems();
     while (cache.pendingIds.length) {
       if (o.now() - o.startedAt >= o.maxMinutes * 60 * 1000) return { action: 'full-progress', written: false };
       const id = cache.pendingIds[0];
@@ -185,6 +195,7 @@ async function runFull(o) {
       cache.doneIds.push(id);
       checkProblems(cache.problems, cache.doneIds.length, { final: false });
       if (++sinceSave >= 50) { writeJson(o.paths.cache, cache); sinceSave = 0; }
+      retryProblems();
     }
   } finally {
     writeJson(o.paths.cache, cache);

@@ -11,10 +11,7 @@ export function validateCard(card) {
   need(card?.type, 'type');
   need(Array.isArray(card?.civilizations) && card.civilizations.length > 0, 'civilizations');
   need(card?.image, 'image');
-  if (card?.second) {
-    need(card.second.name, 'second.name');
-    need(card.second.type, 'second.type');
-    need(Array.isArray(card.second.civilizations) && card.second.civilizations.length > 0, 'second.civilizations');
-  }
+  // 2つ目の面は、種類や文明が公式に書かれていないカードがある（ツインパクトの呪文側など）ので名前だけ確かめる
+  if (card?.second) need(card.second.name, 'second.name');
   return errs;
 }
