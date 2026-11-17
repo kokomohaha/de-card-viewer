@@ -29,7 +29,10 @@ function writeJson(file, data) {
 const readJson = (file, fallback) => (fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : fallback);
 
 
-const MAX_SKIPPED = 50; // 詳細ページの 404 がこれを超えたら、公式の作りが変わった疑い
+// 読み取れないカード（404・解析できない・必須項目がない）は飛ばして続ける。
+// ただし50件を超えるか、全体の5%を超えたら、公式の作りが変わった疑いがあるので止める。
+const MAX_PROBLEMS = 50;
+const MAX_PROBLEM_RATIO = 0.05;
 const MIN_KEEP_RATIO = 0.95; // 前回より5%以上減ったら公開しない
 const PAGE_MARGIN = 5;
 
@@ -93,10 +96,20 @@ async function fetchCard(fetcher, id, thumb) {
   }
 }
 
-function checkSkipped(skipped, attempted) {
-  if (skipped > MAX_SKIPPED || (attempted > 0 && skipped === attempted)) {
-    throw new ValidationFailed([`詳細ページが ${attempted} 件中 ${skipped} 件見つかりませんでした（URL が変わった可能性があります）`]);
-  }
+/** 1枚分の結果を problems に記録する。カードとして使えるなら返す。 */
+function take(r, id, problems) {
+  if (r.skipped) { problems.push(`${id}: 詳細ページが見つかりません（404）`); return null; }
+  if (r.errors.length) { problems.push(...r.errors); return null; }
+  return r.card;
+}
+
+function checkProblems(problems, attempted, { final }) {
+  const tooMany = problems.length > MAX_PROBLEMS || (final && attempted > 0 && problems.length / attempted > MAX_PROBLEM_RATIO);
+  if (tooMany) throw new ValidationFailed([`${attempted} 件中 ${problems.length} 件のカードを読み取れませんでした（公式サイトの作りが変わった可能性があります）`, ...problems]);
+}
+
+function reportProblems(problems) {
+  if (problems.length) console.warn(`読み取れなかったため飛ばしたカード（${problems.length} 件）:\n${problems.join('\n')}`);
 }
 
 /** 一覧の並び（新しい順）とフォーマットを付けて、書き出す。前回より大きく減るときは書かない。 */
@@ -120,20 +133,18 @@ function finalize(snapshot, byId, paths, nowIso) {
 async function runIncremental(o) {
   const snapshot = await snapshotLists(o);
   const existing = new Map(readJson(o.paths.cards, []).map((c) => [c.id, c]));
-  const errors = [];
+  const problems = [];
   let attempted = 0;
-  let skipped = 0;
   for (const item of snapshot.items) {
     if (existing.has(item.id)) continue;
     if (attempted >= o.limit) break;
     attempted++;
-    const r = await fetchCard(o.fetcher, item.id, item.thumb);
-    if (r.card) existing.set(item.id, r.card);
-    if (r.skipped) skipped++;
-    errors.push(...r.errors);
+    const card = take(await fetchCard(o.fetcher, item.id, item.thumb), item.id, problems);
+    if (card) existing.set(item.id, card);
+    checkProblems(problems, attempted, { final: false });
   }
-  if (errors.length) throw new ValidationFailed(errors);
-  checkSkipped(skipped, attempted);
+  checkProblems(problems, attempted, { final: true });
+  reportProblems(problems);
   finalize(snapshot, existing, o.paths, o.nowIso());
   const state = loadState(o.paths.state);
   state.lastIncrementalAt = o.nowIso();
@@ -156,31 +167,30 @@ async function runFull(o) {
       cards: {},
       pendingIds: snapshot.items.map((i) => i.id).slice(0, o.limit),
       doneIds: [],
-      skippedIds: [],
+      problems: [],
       done: false,
     };
     writeJson(o.paths.cache, cache);
   }
   const thumbs = new Map(cache.snapshot.items.map((i) => [i.id, i.thumb]));
-  const errors = [];
+  cache.problems ??= [];
   let sinceSave = 0;
   try {
     while (cache.pendingIds.length) {
       if (o.now() - o.startedAt >= o.maxMinutes * 60 * 1000) return { action: 'full-progress', written: false };
       const id = cache.pendingIds[0];
-      const r = await fetchCard(o.fetcher, id, thumbs.get(id));
-      if (r.errors.length) { errors.push(...r.errors); break; }
-      if (r.card) cache.cards[id] = r.card;
-      if (r.skipped) cache.skippedIds.push(id);
+      const card = take(await fetchCard(o.fetcher, id, thumbs.get(id)), id, cache.problems);
+      if (card) cache.cards[id] = card;
       cache.pendingIds.shift();
       cache.doneIds.push(id);
+      checkProblems(cache.problems, cache.doneIds.length, { final: false });
       if (++sinceSave >= 50) { writeJson(o.paths.cache, cache); sinceSave = 0; }
     }
   } finally {
     writeJson(o.paths.cache, cache);
   }
-  if (errors.length) throw new ValidationFailed(errors);
-  checkSkipped(cache.skippedIds.length, cache.doneIds.length);
+  checkProblems(cache.problems, cache.doneIds.length, { final: true });
+  reportProblems(cache.problems);
 
   finalize(cache.snapshot, new Map(Object.entries(cache.cards)), o.paths, o.nowIso());
   cache.done = true;

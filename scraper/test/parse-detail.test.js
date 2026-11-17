@@ -75,6 +75,15 @@ describe('parseDetailPage', () => {
     expect(parseDetailPage(fx('detail-twinpact'), 'dm26ex5-G003').second.image).toBeNull();
   });
 
+  test('超化カード（同じ名前で2つの状態・画像は1枚）は、2つ目も同じ名前でツインパクトではない', () => {
+    const c = parseDetailPage(fx('detail-chog'), 'dm26ex4-CHOG007');
+    expect(c.name).toBe('蒼き王道 ドギラゴン超');
+    expect(c.isTwinpact).toBe(false);
+    expect(c.second.name).toBe('蒼き王道 ドギラゴン超');
+    expect(c.second.power).toBe(13000);
+    expect(c.second.image).toBeNull();
+  });
+
   test('収録番号を取り出す（通常版かどうかの判断に使う）', () => {
     expect(parseDetailPage(fx('detail-spell'), 'dmr14-051')).toMatchObject({ setCode: 'DMR14', number: '51/55' });
     expect(parseDetailPage(fx('detail-creature'), 'dm26ex5-SEC001CHO')).toMatchObject({ setCode: 'DM26EX5', number: '㊙1超/㊙6' });

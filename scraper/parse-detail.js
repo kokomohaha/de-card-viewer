@@ -55,13 +55,15 @@ export function parseDetailPage(html, id) {
 
   const firstHeading = headingName($, boxes[0]);
   const secondImage = boxes[1]?.find('.card-img img').attr('src');
-  const isTwinpact = boxes.length > 1 && !secondImage;
+  // ツインパクト：画像は1枚で、名前が「A / B」。
+  // 超化カードなど：画像は1枚で、名前は同じ（2つの状態がある）。両面カード：裏面にも画像がある。
+  const isTwinpact = boxes.length > 1 && !secondImage && firstHeading.includes(' / ');
 
   let names = [firstHeading];
   if (isTwinpact) {
     names = firstHeading.split(' / ').map((s) => s.trim());
   } else if (boxes[1]) {
-    names = [firstHeading, headingName($, boxes[1])];
+    names = [firstHeading, headingName($, boxes[1]) || firstHeading];
   }
 
   const front = parseFace($, boxes[0], names[0]);

@@ -234,6 +234,24 @@ describe('runScrape', () => {
     expect(fs.existsSync(paths.meta)).toBe(false);
   });
 
+  test('読み取れないカードが少しだけなら、そのカードを飛ばして続ける', async () => {
+    const all = Array.from({ length: 30 }, (_, i) => `a-${i}`);
+    const site = fakeSite({ all, broken: ['a-7'] });
+    const r = await runScrape({ mode: 'full', fetcher: site.fetcher, now: () => 0, paths, maxMinutes: 330 });
+    expect(r).toEqual({ action: 'full-done', written: true });
+    const ids = readCards().map((c) => c.id);
+    expect(ids).toHaveLength(29);
+    expect(ids).not.toContain('a-7');
+  });
+
+  test('読み取れないカードが50件を超えたら、その時点で止まる', async () => {
+    const all = Array.from({ length: 200 }, (_, i) => `a-${i}`);
+    const site = fakeSite({ all, broken: all.slice(0, 60) });
+    await expect(runScrape({ mode: 'full', fetcher: site.fetcher, now: () => 0, paths, maxMinutes: 330 })).rejects.toBeInstanceOf(ValidationFailed);
+    expect(site.calls.details.length).toBeLessThanOrEqual(52);
+    expect(fs.existsSync(paths.cards)).toBe(false);
+  });
+
   test('一覧のページが空なら（公式の作りが変わった）ValidationFailed', async () => {
     const site = fakeSite({ all: [] });
     await expect(
