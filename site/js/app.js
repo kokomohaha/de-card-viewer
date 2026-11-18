@@ -7,7 +7,7 @@ import { useNormalImages } from './normal.js';
 import { loadCards } from './load-cards.js';
 
 // 公開前に、専用 Gmail アドレスに書き換えてください（削除依頼などの窓口としてフッターに表示します）。
-const CONTACT_EMAIL = 'fengjinyg87@gmail.com';
+const CONTACT_EMAIL = 'fengjinye87@gmail.com';
 
 const $ = (id) => document.getElementById(id);
 
