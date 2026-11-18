@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>使い方 | デュエマ カード一覧（非公式）</title>
+<meta name="description" content="デュエマ カード一覧（非公式）の使い方。カードの探し方、絞り込み、詳細画面、メルカリ・カーナベル・YouTube へのリンクの使い方をまとめています。">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="guide.css">
+</head>
+<body class="guide-body">
+<header class="guide-top">
+  <a class="guide-back" href="./">← カード一覧にもどる</a>
+  <span class="badge">非公式</span>
+</header>
+
+<main class="guide">
+  <h1>使い方</h1>
+  <p class="guide__lead">デュエル・マスターズの全カードを、1画面にたくさん並べて探せるサイトです。気になるカードを押すと、大きな画像と効果、相場を調べるリンクが出ます。</p>
+
+  <nav class="toc" aria-label="もくじ">
+    <ol>
+      <li><a href="#look">一覧を見る</a></li>
+      <li><a href="#search">カードを探す</a></li>
+      <li><a href="#detail">カードの詳細を見る</a></li>
+      <li><a href="#price">値段や動画を調べる</a></li>
+      <li><a href="#share">検索条件を共有する</a></li>
+      <li><a href="#phone">スマホで使うとき</a></li>
+      <li><a href="#faq">よくある質問</a></li>
+    </ol>
+  </nav>
+
+  <section id="look">
+    <h2><span class="num">1</span>一覧を見る</h2>
+    <p>開くと、すべてのカードが発売日の新しい順に並びます。下にスクロールすると続きが出てきます。</p>
+    <div class="sketch" aria-hidden="true">
+      <div class="sketch__bar"><span class="sk-input">カード名・能力・種族…</span><span class="sk-chip">光</span><span class="sk-chip">水</span><span class="sk-chip">闇</span><span class="sk-chip">火</span><span class="sk-chip">自然</span><span class="sk-count">11,793 枚</span></div>
+      <div class="sketch__grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
+    <ul>
+      <li><b>カードの大きさ</b>：右上の「小・中・大」で切り替えます。「小」にすると、1画面にいちばん多く並びます。</li>
+      <li><b>並び順</b>：発売日・カード名・コスト・パワーの順に並べ替えられます。</li>
+      <li><b>同名カードをまとめる</b>：はじめはオンです。再録などで同じ名前のカードが何枚もあるときは、1枚にまとめて表示します。オフにすると、全部のカードを別々に表示します。</li>
+      <li><b>枚数</b>：右端に、今の条件に合うカードの枚数が出ます。</li>
+    </ul>
+  </section>
+
+  <section id="search">
+    <h2><span class="num">2</span>カードを探す</h2>
+    <h3>文字で探す</h3>
+    <p>上の検索欄に入力すると、すぐに一覧が絞り込まれます。カード名のほか、<b>能力の文章・種族・イラストレーター名</b>でも探せます。</p>
+    <p class="tip">例：「ブロッカー」「S・トリガー」「ドラゴン」など。ひらがなとカタカナは区別しません。</p>
+
+    <h3>条件で絞り込む</h3>
+    <dl class="defs">
+      <dt>文明</dt><dd>光・水・闇・火・自然・ゼロのボタンを押します。複数選べます。</dd>
+      <dt>コスト</dt><dd>下限と上限を入れます。片方だけでも大丈夫です。</dd>
+      <dt>種類・種族・パック</dt><dd>クリーチャー、呪文などの種類や、種族、収録パックで絞ります。種族とパックは入力すると候補が出ます。</dd>
+    </dl>
+
+    <h3>詳細条件</h3>
+    <p>「詳細条件」を開くと、さらに細かく絞れます。</p>
+    <dl class="defs">
+      <dt>文明の条件</dt><dd>「どれかを含む」「選んだ文明だけ」「すべて含む」から選べます。たとえば火と自然を選んで「選んだ文明だけ」にすると、火と自然の多色や火単色・自然単色のカードに絞れます。</dd>
+      <dt>単色・多色</dt><dd>単色カードだけ、多色カードだけにできます。</dd>
+      <dt>レアリティ・パワー</dt><dd>レアリティや、パワーの範囲で絞ります。</dd>
+      <dt>ツインパクト</dt><dd>ツインパクトだけ、またはツインパクトを除いて表示します。</dd>
+      <dt>フォーマット</dt><dd>オリジナル、または現行（2ブロック）で使えるカードだけを表示します。</dd>
+      <dt>特殊能力・イラストレーター</dt><dd>能力の種類や、イラストレーターの名前で絞ります。</dd>
+    </dl>
+    <p>「条件をすべてクリア」を押すと、最初の状態にもどります。</p>
+  </section>
+
+  <section id="detail">
+    <h2><span class="num">3</span>カードの詳細を見る</h2>
+    <p>一覧のカードを押すと、右側（スマホでは画面の下）に詳細が出ます。</p>
+    <div class="sketch sketch--detail" aria-hidden="true">
+      <div class="sk-card"></div>
+      <div class="sk-info">
+        <b>カード名</b>
+        <span>文明・コスト・パワー・種族</span>
+        <span>能力の文章</span>
+        <span class="sk-links"><em>公式</em><em>メルカリ</em><em>カーナベル</em><em>YouTube</em></span>
+      </div>
+    </div>
+    <ul>
+      <li><b>大きな画像</b>：カードの画像を大きく表示します。画像を押すと、画面いっぱいに拡大します。もう一度押すか、Esc キーで閉じます。</li>
+      <li><b>裏面</b>：両面のカードには「表面」「裏面」の切り替えボタンが出ます。</li>
+      <li><b>ツインパクト</b>：上下2つの面の効果を、両方表示します。</li>
+      <li><b>収録商品</b>：そのカードが入っているパックや商品の一覧です。</li>
+      <li>閉じるときは右上の「×」か、Esc キーを押します。</li>
+    </ul>
+    <p class="tip">画像は、どのカードも<b>通常版</b>のものを表示しています。シークレットなどの特別版は、公式の詳細ページで確認できます。</p>
+  </section>
+
+  <section id="price">
+    <h2><span class="num">4</span>値段や動画を調べる</h2>
+    <p>詳細の下にあるボタンで、そのカードの名前で検索したページが新しいタブで開きます。</p>
+    <dl class="defs">
+      <dt>公式の詳細ページ</dt><dd>デュエル・マスターズ公式サイトのカードページです。</dd>
+      <dt>メルカリ（販売中・安い順）</dt><dd>メルカリで販売中のものを安い順に並べた検索結果です。いちばん上が、そのときの最安値の目安です。</dd>
+      <dt>カーナベルで買う</dt><dd>カード専門店カーナベルの販売ページの検索結果です。</dd>
+      <dt>カーナベルの買取価格</dt><dd>カーナベルの買取ページの検索結果です。売るときの値段の目安になります。</dd>
+      <dt>YouTube で動画を探す</dt><dd>「デュエマ カード名」で YouTube を検索した結果です。デッキ紹介や対戦動画が見つかります。</dd>
+    </dl>
+    <p class="tip">値段は各サイトのページで確認してください。このサイトでは値段を保存していないので、いつでもその時点の情報が見られます。</p>
+  </section>
+
+  <section id="share">
+    <h2><span class="num">5</span>検索条件を共有する</h2>
+    <p>絞り込みの条件は、ページのアドレス（URL）に自動で入ります。アドレスをコピーして送ったりブックマークしたりすると、同じ条件の一覧をそのまま開けます。</p>
+  </section>
+
+  <section id="phone">
+    <h2><span class="num">6</span>スマホで使うとき</h2>
+    <ul>
+      <li>スマホでは、カードをたくさん並べるために絞り込みの欄をたたんでいます。<b>「絞り込み」</b>ボタンを押すと開きます。</li>
+      <li>カードを押すと、詳細が画面の下から出てきます。</li>
+      <li>カードの大きさを「小」にすると、1画面に多くのカードが並びます。</li>
+    </ul>
+  </section>
+
+  <section id="faq">
+    <h2><span class="num">7</span>よくある質問</h2>
+    <details class="faq"><summary>新しいカードはいつ追加されますか？</summary>
+      <p>毎日深夜に公式サイトを確認し、新しいカードを自動で追加しています。いつの時点のデータかは、ページ下の「データ更新日」で確認できます。</p></details>
+    <details class="faq"><summary>画像が出ないカードがあります</summary>
+      <p>公式サイトの画像を表示しているため、公式側で画像がまだないカードや、通信が混み合っているときは、カード名だけの表示になります。時間をおいて再読み込みしてください。</p></details>
+    <details class="faq"><summary>枚数が公式サイトと少し違います</summary>
+      <p>「同名カードをまとめる」がオンのときは、同じ名前のカードを1枚と数えています。オフにすると、すべてのカードの枚数になります。</p></details>
+    <details class="faq"><summary>公式のサイトですか？</summary>
+      <p>いいえ、ファンが作った非公式のサイトです。タカラトミー等とは関係ありません。カードの画像と情報は、公式サイトのものを表示しています。</p></details>
+  </section>
+
+  <p class="guide__cta"><a class="btn-cta" href="./">カード一覧を開く</a></p>
+</main>
+
+<footer class="foot guide-foot">
+  <p>非公式のファンサイトです。タカラトミー等とは関係ありません。　お問い合わせ・削除依頼：fengjinyg87@gmail.com</p>
+</footer>
+</body>
+</html>
